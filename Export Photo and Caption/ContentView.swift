@@ -3,6 +3,15 @@ import Photos
 import UIKit
 
 struct ContentView: View {
+    private enum NavigationDirection {
+        case forward
+        case backward
+    }
+
+    private struct DetailSelection: Identifiable {
+        let id: UUID
+    }
+
     @StateObject private var model = ContentViewModel()
     @State private var showPicker = false
     @State private var step: Int = {
@@ -14,63 +23,93 @@ struct ContentView: View {
             return 0
         }
     }()
-    @State private var selectedDetailPhoto: ProcessedPhoto?
+    @State private var selectedDetailSelection: DetailSelection?
+    @State private var navigationDirection: NavigationDirection = .forward
     private let maxStep = 2
 
     var body: some View {
         GeometryReader { proxy in
-            VStack(spacing: 12) {
-                VStack(alignment: .leading, spacing: 8) {
-                    HStack {
-                        Button {
-                            goBack()
-                        } label: {
-                            ZStack {
-                                Circle()
-                                    .fill(Color.white.opacity(0.12))
-                                    .frame(width: 44, height: 44)
-                                Circle()
-                                    .stroke(Color.white.opacity(0.18), lineWidth: 1)
-                                    .frame(width: 44, height: 44)
-                                Image(systemName: "chevron.left")
-                                    .font(.system(size: 20, weight: .semibold))
-                                    .foregroundStyle(.white)
+            ZStack {
+                VStack(spacing: 12) {
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack {
+                            Button {
+                                goBack()
+                            } label: {
+                                ZStack {
+                                    Circle()
+                                        .fill(Color.white.opacity(0.12))
+                                        .frame(width: 44, height: 44)
+                                    Circle()
+                                        .stroke(Color.white.opacity(0.18), lineWidth: 1)
+                                        .frame(width: 44, height: 44)
+                                    Image(systemName: "chevron.left")
+                                        .font(.system(size: 20, weight: .semibold))
+                                        .foregroundStyle(.white)
+                                }
+                                .accessibilityLabel("Back")
                             }
-                            .accessibilityLabel("Back")
+                            .buttonStyle(CircleBackButtonStyle())
+                            .opacity(step == 0 ? 0 : 1)
+                            .disabled(step == 0)
+
+                            Spacer()
                         }
-                        .buttonStyle(CircleBackButtonStyle())
-                        .opacity(step == 0 ? 0 : 1)
-                        .disabled(step == 0)
 
-                        Spacer()
+                        HStack {
+                            Text("Captioned Photos")
+                                .font(.title2.weight(.semibold))
+                            Spacer()
+                            Text("Step \(step + 1)/3")
+                                .font(.footnote)
+                                .foregroundStyle(.secondary)
+                        }
                     }
+                    .padding(.horizontal)
+                    .padding(.top, 4)
 
-                    HStack {
-                        Text("Captioned Photos")
-                            .font(.title2.weight(.semibold))
-                        Spacer()
-                        Text("Step \(step + 1)/3")
-                            .font(.footnote)
-                            .foregroundStyle(.secondary)
+                    ZStack {
+                        if step == 0 {
+                            permissionPage
+                                .transition(stepTransition)
+                        } else if step == 1 {
+                            selectPage
+                                .transition(stepTransition)
+                        } else {
+                            styleGeneratePage
+                                .transition(stepTransition)
+                        }
                     }
+                    .id(step)
+                    .animation(.easeInOut(duration: 0.28), value: step)
+
+                    HStack(spacing: 8) {
+                        ForEach(0..<3, id: \.self) { index in
+                            Circle()
+                                .fill(index == step ? Color.white : Color.white.opacity(0.35))
+                                .frame(width: 8, height: 8)
+                        }
+                    }
+                    .padding(.bottom, 8)
                 }
-                .padding(.horizontal)
-                .padding(.top, 4)
+                .frame(width: proxy.size.width, height: proxy.size.height, alignment: .top)
 
-                TabView(selection: $step) {
-                    permissionPage
-                        .tag(0)
+                VStack(spacing: 0) {
+                    Color.clear
+                        .frame(height: 18)
+                        .contentShape(Rectangle())
+                        .gesture(stepSwipeGesture)
 
-                    selectPage
-                        .tag(1)
+                    Spacer()
 
-                    styleGeneratePage
-                        .tag(2)
+                    Color.clear
+                        .frame(height: 14)
+                        .contentShape(Rectangle())
+                        .gesture(stepSwipeGesture)
                 }
-                .tabViewStyle(.page(indexDisplayMode: .always))
-                .animation(.easeInOut, value: step)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .ignoresSafeArea(edges: .bottom)
             }
-            .frame(width: proxy.size.width, height: proxy.size.height, alignment: .top)
             .alert(item: $model.alertMessage) { alert in
                 Alert(
                     title: Text(alert.title),
@@ -82,7 +121,9 @@ struct ContentView: View {
                 ShareSheet(items: model.shareURLs)
             }
             .sheet(isPresented: $showPicker) {
-                PhotoPickerSheet { inputs in
+                PhotoPickerSheet(onProcessingStart: { count in
+                    model.beginPickerProcessing(expectedCount: count)
+                }, onComplete: { inputs in
                     guard !inputs.isEmpty else { return }
 
                     var merged = model.selectedInputs
@@ -100,16 +141,23 @@ struct ContentView: View {
 
                     model.selectedInputs = merged
                     Task { await model.loadPickerItems() }
-                }
+                })
             }
-            .sheet(item: $selectedDetailPhoto) { photo in
-                NavigationStack {
-                    PhotoDetailView(photo: photo)
+            .sheet(item: $selectedDetailSelection) { selection in
+                if let index = model.photos.firstIndex(where: { $0.id == selection.id }) {
+                    NavigationStack {
+                        PhotoDetailView(photo: $model.photos[index])
+                    }
+                } else {
+                    NavigationStack {
+                        Text("Photo not found")
+                            .foregroundStyle(.secondary)
+                    }
                 }
             }
             .onChange(of: model.authorizationStatus) { _ in
                 if isAuthorized, step == 0 {
-                    step = 1
+                    setStep(1)
                 }
             }
         }
@@ -131,7 +179,7 @@ struct ContentView: View {
                 Label("Permission granted", systemImage: "checkmark.seal.fill")
                     .foregroundStyle(.green)
                 Button("Next") {
-                    step = 1
+                    setStep(1)
                 }
                 .buttonStyle(.borderedProminent)
             } else {
@@ -166,7 +214,13 @@ struct ContentView: View {
             .font(.footnote)
 
             if model.isLoading {
-                ProgressView("Reading selected photos...")
+                ProgressView(value: Double(model.loadProgressProcessed), total: Double(max(model.loadProgressTotal, 1))) {
+                    Text("Reading selected photos...")
+                } currentValueLabel: {
+                    Text("Loaded \(model.loadProgressProcessed) of \(model.loadProgressTotal)")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
             } else {
                 Text("Selected: \(model.photos.count)")
                     .foregroundStyle(.secondary)
@@ -174,31 +228,45 @@ struct ContentView: View {
 
             List {
                 if model.photos.isEmpty {
-                    Text("No photos selected yet.")
-                        .foregroundStyle(.secondary)
+                    if model.isLoading {
+                        HStack(spacing: 10) {
+                            ProgressView()
+                            Text("Working...")
+                                .foregroundStyle(.secondary)
+                        }
+                    } else {
+                        Text("No photos selected yet.")
+                            .foregroundStyle(.secondary)
+                    }
                 } else {
                     ForEach(model.photos) { photo in
-                        Button {
-                            selectedDetailPhoto = photo
-                        } label: {
-                            HStack {
-                                Image(uiImage: photo.sourceImage)
-                                    .resizable()
-                                    .scaledToFill()
-                                    .frame(width: 48, height: 48)
-                                    .clipped()
-                                    .cornerRadius(6)
-                                VStack(alignment: .leading, spacing: 4) {
-                                    Text(photo.originalFilename).lineLimit(1)
-                                    Text(photo.caption ?? "No caption found")
-                                        .font(.caption)
-                                        .foregroundStyle(.secondary)
-                                        .lineLimit(1)
+                        HStack {
+                            Image(uiImage: photo.sourceImage)
+                                .resizable()
+                                .scaledToFill()
+                                .frame(width: 48, height: 48)
+                                .clipped()
+                                .cornerRadius(6)
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(photo.originalFilename).lineLimit(1)
+                                Group {
+                                    if photo.effectiveCaption.isEmpty {
+                                        Text("No caption found")
+                                            .italic()
+                                    } else {
+                                        Text(photo.effectiveCaption)
+                                    }
                                 }
-                                Spacer(minLength: 0)
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                                .lineLimit(1)
                             }
+                            Spacer(minLength: 0)
                         }
-                        .buttonStyle(.plain)
+                        .contentShape(Rectangle())
+                        .onTapGesture {
+                            selectedDetailSelection = DetailSelection(id: photo.id)
+                        }
                         .swipeActions(edge: .trailing, allowsFullSwipe: true) {
                             Button(role: .destructive) {
                                 model.removePhoto(photo)
@@ -212,17 +280,20 @@ struct ContentView: View {
             .listStyle(.plain)
 
             Button("Next") {
-                step = 2
+                setStep(2)
             }
             .buttonStyle(.borderedProminent)
             .disabled(model.photos.isEmpty)
+
         }
         .padding()
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
     }
 
     private var styleGeneratePage: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        let hasGeneratedImages = model.photos.contains { $0.renderedImage != nil }
+
+        return VStack(alignment: .leading, spacing: 12) {
             Text("Choose caption font, preview style, then generate and save.")
                 .foregroundStyle(.secondary)
 
@@ -262,6 +333,7 @@ struct ContentView: View {
                 Task { await model.generateAndSaveToAlbum() }
             }
             .buttonStyle(.borderedProminent)
+            .frame(maxWidth: .infinity)
             .disabled(model.photos.isEmpty || model.isExporting)
 
             if let status = model.generationStatusMessage {
@@ -295,16 +367,23 @@ struct ContentView: View {
                 .padding(.top, 2)
             }
 
-            Button("Share Exported Files") {
-                model.prepareShare()
-            }
-            .disabled(model.photos.isEmpty)
+            HStack {
+                Button("Start Over", role: .destructive) {
+                    model.clearSelectedPhotos()
+                    setStep(isAuthorized ? 1 : 0)
+                }
+                .buttonStyle(.bordered)
+                .disabled(model.photos.isEmpty)
 
-            Button("Start Over", role: .destructive) {
-                model.clearSelectedPhotos()
-                step = isAuthorized ? 1 : 0
+                Spacer()
+
+                Button("Share Exported Files") {
+                    model.prepareShare()
+                }
+                .buttonStyle(.bordered)
+                .disabled(!hasGeneratedImages || model.isExporting)
             }
-            .disabled(model.photos.isEmpty)
+            .padding(.top, 6)
 
             Spacer()
         }
@@ -317,11 +396,47 @@ struct ContentView: View {
     }
 
     private func goBack() {
-        step = max(0, step - 1)
+        setStep(step - 1)
     }
 
     private func goNext() {
-        step = min(maxStep, step + 1)
+        setStep(step + 1)
+    }
+
+    private var stepTransition: AnyTransition {
+        switch navigationDirection {
+        case .forward:
+            return .asymmetric(
+                insertion: .move(edge: .trailing).combined(with: .opacity),
+                removal: .move(edge: .leading).combined(with: .opacity)
+            )
+        case .backward:
+            return .asymmetric(
+                insertion: .move(edge: .leading).combined(with: .opacity),
+                removal: .move(edge: .trailing).combined(with: .opacity)
+            )
+        }
+    }
+
+    private func setStep(_ target: Int) {
+        let clamped = min(max(target, 0), maxStep)
+        guard clamped != step else { return }
+        navigationDirection = clamped > step ? .forward : .backward
+        withAnimation(.easeInOut(duration: 0.28)) {
+            step = clamped
+        }
+    }
+
+    private var stepSwipeGesture: some Gesture {
+        DragGesture(minimumDistance: 20, coordinateSpace: .local)
+            .onEnded { value in
+                guard abs(value.translation.width) > abs(value.translation.height) else { return }
+                if value.translation.width < -40 {
+                    goNext()
+                } else if value.translation.width > 40 {
+                    goBack()
+                }
+            }
     }
 
     private var permissionText: String {

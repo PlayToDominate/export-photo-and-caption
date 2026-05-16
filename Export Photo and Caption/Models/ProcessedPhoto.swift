@@ -9,6 +9,7 @@ struct ProcessedPhoto: Identifiable {
     var originalFilename: String
     var creationDate: Date?
     var caption: String?
+    var captionOverride: String?
     var discoveredCaptionCandidates: [String: String]
     var discoveredMetadataKeys: [String]
 
@@ -17,7 +18,18 @@ struct ProcessedPhoto: Identifiable {
     var renderedFilename: String?
 
     var effectiveCaption: String {
+        let overrideTrimmed = captionOverride?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        if !overrideTrimmed.isEmpty { return overrideTrimmed }
+
         let trimmed = caption?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-        return trimmed.isEmpty ? "No caption found" : trimmed
+        return trimmed
+    }
+
+    var captionForExportSlug: String? {
+        let overrideTrimmed = captionOverride?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        if !overrideTrimmed.isEmpty { return overrideTrimmed }
+
+        let detectedTrimmed = caption?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        return detectedTrimmed.isEmpty ? nil : detectedTrimmed
     }
 }

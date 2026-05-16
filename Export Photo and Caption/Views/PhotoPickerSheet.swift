@@ -3,6 +3,7 @@ import SwiftUI
 import UniformTypeIdentifiers
 
 struct PhotoPickerSheet: UIViewControllerRepresentable {
+    let onProcessingStart: (Int) -> Void
     let onComplete: ([SelectedPhotoInput]) -> Void
 
     func makeUIViewController(context: Context) -> PHPickerViewController {
@@ -19,13 +20,15 @@ struct PhotoPickerSheet: UIViewControllerRepresentable {
     func updateUIViewController(_ uiViewController: PHPickerViewController, context: Context) {}
 
     func makeCoordinator() -> Coordinator {
-        Coordinator(onComplete: onComplete)
+        Coordinator(onProcessingStart: onProcessingStart, onComplete: onComplete)
     }
 
     final class Coordinator: NSObject, PHPickerViewControllerDelegate {
+        let onProcessingStart: (Int) -> Void
         let onComplete: ([SelectedPhotoInput]) -> Void
 
-        init(onComplete: @escaping ([SelectedPhotoInput]) -> Void) {
+        init(onProcessingStart: @escaping (Int) -> Void, onComplete: @escaping ([SelectedPhotoInput]) -> Void) {
+            self.onProcessingStart = onProcessingStart
             self.onComplete = onComplete
         }
 
@@ -36,6 +39,8 @@ struct PhotoPickerSheet: UIViewControllerRepresentable {
                 onComplete([])
                 return
             }
+
+            onProcessingStart(results.count)
 
             Task {
                 var loaded: [SelectedPhotoInput] = []

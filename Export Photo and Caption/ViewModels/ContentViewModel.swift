@@ -17,6 +17,8 @@ final class ContentViewModel: ObservableObject {
     @Published var saveStatusMessage: String?
     @Published var captionFont: CaptionFontOption = .system
     @Published var exportSummary = ExportSummary()
+    @Published var loadProgressProcessed: Int = 0
+    @Published var loadProgressTotal: Int = 0
 
     private let metadataService = PhotoMetadataService()
     private let renderer = CaptionedPhotoRenderer()
@@ -27,34 +29,64 @@ final class ContentViewModel: ObservableObject {
         authorizationStatus = await metadataService.requestPhotoAuthorization()
     }
 
+    func beginPickerProcessing(expectedCount: Int) {
+        isLoading = true
+        loadProgressTotal = max(expectedCount, 1)
+        loadProgressProcessed = 0
+    }
+
     func loadPickerItems() async {
         let loadToken = UUID()
         activeLoadToken = loadToken
+
+        let batchSize = 12
 
         guard !selectedInputs.isEmpty else {
             photos = []
             generationStatusMessage = nil
             saveStatusMessage = nil
+            loadProgressProcessed = 0
+            loadProgressTotal = 0
             return
         }
 
         isLoading = true
-        defer { isLoading = false }
+        loadProgressTotal = selectedInputs.count
+        loadProgressProcessed = 0
+        defer {
+            isLoading = false
+            loadProgressProcessed = 0
+            loadProgressTotal = 0
+        }
 
         var loaded: [ProcessedPhoto] = []
         var skippedFromExportAlbum = 0
-        for (index, input) in selectedInputs.enumerated() {
-            if isInputFromExportAlbum(input) {
-                skippedFromExportAlbum += 1
-                continue
+
+        for chunkStart in stride(from: 0, to: selectedInputs.count, by: batchSize) {
+            let chunkEnd = min(chunkStart + batchSize, selectedInputs.count)
+            let chunk = Array(selectedInputs[chunkStart..<chunkEnd])
+
+            for (offset, input) in chunk.enumerated() {
+                let index = chunkStart + offset
+
+                if isInputFromExportAlbum(input) {
+                    skippedFromExportAlbum += 1
+                    loadProgressProcessed += 1
+                    continue
+                }
+
+                do {
+                    let photo = try await metadataService.loadPhoto(from: input, index: index)
+                    loaded.append(photo)
+                } catch {
+                    presentError(error.localizedDescription)
+                }
+
+                loadProgressProcessed += 1
             }
 
-            do {
-                let photo = try await metadataService.loadPhoto(from: input, index: index)
-                loaded.append(photo)
-            } catch {
-                presentError(error.localizedDescription)
-            }
+            if loadToken != activeLoadToken { return }
+            await Task.yield()
         }
 
         guard loadToken == activeLoadToken else { return }
