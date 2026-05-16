@@ -1,0 +1,337 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		A1B2C3D4E5F6000000000001 /* ExportPhotoAndCaptionApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6000000000011 /* ExportPhotoAndCaptionApp.swift */; };
+		A1B2C3D4E5F6000000000002 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6000000000012 /* ContentView.swift */; };
+		A1B2C3D4E5F6000000000003 /* ProcessedPhoto.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6000000000013 /* ProcessedPhoto.swift */; };
+		A1B2C3D4E5F6000000000004 /* ContentViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6000000000014 /* ContentViewModel.swift */; };
+		A1B2C3D4E5F6000000000005 /* FilenameBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6000000000015 /* FilenameBuilder.swift */; };
+		A1B2C3D4E5F6000000000006 /* PhotoMetadataService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6000000000016 /* PhotoMetadataService.swift */; };
+		A1B2C3D4E5F6000000000007 /* PolaroidRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6000000000017 /* PolaroidRenderer.swift */; };
+		A1B2C3D4E5F6000000000008 /* PhotoDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6000000000018 /* PhotoDetailView.swift */; };
+	A1B2C3D4E5F6000000000009 /* ShareSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6000000000019 /* ShareSheet.swift */; };
+	A1B2C3D4E5F600000000000A /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6000000000020 /* Assets.xcassets */; };
+	A1B2C3D4E5F600000000000B /* SelectedPhotoInput.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6000000000022 /* SelectedPhotoInput.swift */; };
+	A1B2C3D4E5F600000000000C /* PhotoPickerSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6000000000023 /* PhotoPickerSheet.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		A1B2C3D4E5F6000000000010 /* Export Photo and Caption.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Export Photo and Caption.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		A1B2C3D4E5F6000000000011 /* ExportPhotoAndCaptionApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExportPhotoAndCaptionApp.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F6000000000012 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F6000000000013 /* ProcessedPhoto.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProcessedPhoto.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F6000000000014 /* ContentViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentViewModel.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F6000000000015 /* FilenameBuilder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilenameBuilder.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F6000000000016 /* PhotoMetadataService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoMetadataService.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F6000000000017 /* PolaroidRenderer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PolaroidRenderer.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F6000000000018 /* PhotoDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoDetailView.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F6000000000019 /* ShareSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareSheet.swift; sourceTree = "<group>"; };
+	A1B2C3D4E5F6000000000020 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+	A1B2C3D4E5F6000000000021 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+	A1B2C3D4E5F6000000000022 /* SelectedPhotoInput.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SelectedPhotoInput.swift; sourceTree = "<group>"; };
+	A1B2C3D4E5F6000000000023 /* PhotoPickerSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoPickerSheet.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		A1B2C3D4E5F6000000000030 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		A1B2C3D4E5F6000000000040 = {
+			isa = PBXGroup;
+			children = (
+				A1B2C3D4E5F6000000000041 /* Export Photo and Caption */,
+				A1B2C3D4E5F6000000000042 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		A1B2C3D4E5F6000000000041 /* Export Photo and Caption */ = {
+			isa = PBXGroup;
+			children = (
+				A1B2C3D4E5F6000000000011 /* ExportPhotoAndCaptionApp.swift */,
+				A1B2C3D4E5F6000000000012 /* ContentView.swift */,
+				A1B2C3D4E5F6000000000043 /* Models */,
+				A1B2C3D4E5F6000000000044 /* ViewModels */,
+				A1B2C3D4E5F6000000000045 /* Services */,
+				A1B2C3D4E5F6000000000046 /* Views */,
+				A1B2C3D4E5F6000000000020 /* Assets.xcassets */,
+				A1B2C3D4E5F6000000000021 /* Info.plist */,
+			);
+			path = "Export Photo and Caption";
+			sourceTree = "<group>";
+		};
+		A1B2C3D4E5F6000000000042 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				A1B2C3D4E5F6000000000010 /* Export Photo and Caption.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+	A1B2C3D4E5F6000000000043 /* Models */ = {
+		isa = PBXGroup;
+		children = (
+			A1B2C3D4E5F6000000000013 /* ProcessedPhoto.swift */,
+			A1B2C3D4E5F6000000000022 /* SelectedPhotoInput.swift */,
+		);
+		path = Models;
+		sourceTree = "<group>";
+	};
+		A1B2C3D4E5F6000000000044 /* ViewModels */ = {
+			isa = PBXGroup;
+			children = (
+				A1B2C3D4E5F6000000000014 /* ContentViewModel.swift */,
+			);
+			path = ViewModels;
+			sourceTree = "<group>";
+		};
+		A1B2C3D4E5F6000000000045 /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				A1B2C3D4E5F6000000000015 /* FilenameBuilder.swift */,
+				A1B2C3D4E5F6000000000016 /* PhotoMetadataService.swift */,
+				A1B2C3D4E5F6000000000017 /* PolaroidRenderer.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+	A1B2C3D4E5F6000000000046 /* Views */ = {
+		isa = PBXGroup;
+		children = (
+			A1B2C3D4E5F6000000000018 /* PhotoDetailView.swift */,
+			A1B2C3D4E5F6000000000023 /* PhotoPickerSheet.swift */,
+			A1B2C3D4E5F6000000000019 /* ShareSheet.swift */,
+		);
+		path = Views;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		A1B2C3D4E5F6000000000050 /* Export Photo and Caption */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A1B2C3D4E5F6000000000062 /* Build configuration list for PBXNativeTarget "Export Photo and Caption" */;
+			buildPhases = (
+				A1B2C3D4E5F6000000000051 /* Sources */,
+				A1B2C3D4E5F6000000000030 /* Frameworks */,
+				A1B2C3D4E5F6000000000052 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = "Export Photo and Caption";
+			productName = "Export Photo and Caption";
+			productReference = A1B2C3D4E5F6000000000010 /* Export Photo and Caption.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		A1B2C3D4E5F6000000000060 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1600;
+				LastUpgradeCheck = 1600;
+				TargetAttributes = {
+					A1B2C3D4E5F6000000000050 = {
+						CreatedOnToolsVersion = 16.0;
+					};
+				};
+			};
+			buildConfigurationList = A1B2C3D4E5F6000000000061 /* Build configuration list for PBXProject "Export Photo and Caption" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = A1B2C3D4E5F6000000000040;
+			productRefGroup = A1B2C3D4E5F6000000000042 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				A1B2C3D4E5F6000000000050 /* Export Photo and Caption */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		A1B2C3D4E5F6000000000052 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A1B2C3D4E5F600000000000A /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		A1B2C3D4E5F6000000000051 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+		files = (
+			A1B2C3D4E5F6000000000001 /* ExportPhotoAndCaptionApp.swift in Sources */,
+			A1B2C3D4E5F6000000000002 /* ContentView.swift in Sources */,
+			A1B2C3D4E5F6000000000003 /* ProcessedPhoto.swift in Sources */,
+			A1B2C3D4E5F600000000000B /* SelectedPhotoInput.swift in Sources */,
+			A1B2C3D4E5F6000000000004 /* ContentViewModel.swift in Sources */,
+			A1B2C3D4E5F6000000000005 /* FilenameBuilder.swift in Sources */,
+			A1B2C3D4E5F6000000000006 /* PhotoMetadataService.swift in Sources */,
+			A1B2C3D4E5F6000000000007 /* PolaroidRenderer.swift in Sources */,
+			A1B2C3D4E5F6000000000008 /* PhotoDetailView.swift in Sources */,
+			A1B2C3D4E5F600000000000C /* PhotoPickerSheet.swift in Sources */,
+			A1B2C3D4E5F6000000000009 /* ShareSheet.swift in Sources */,
+		);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		A1B2C3D4E5F6000000000070 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		A1B2C3D4E5F6000000000071 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+			};
+			name = Release;
+		};
+		A1B2C3D4E5F6000000000072 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "\"Export Photo and Caption/Preview Content\"";
+				DEVELOPMENT_TEAM = 2ZP6G42YCG;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = "Export Photo and Caption/Info.plist";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.example.ExportPhotoAndCaption;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		A1B2C3D4E5F6000000000073 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "\"Export Photo and Caption/Preview Content\"";
+				DEVELOPMENT_TEAM = 2ZP6G42YCG;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = "Export Photo and Caption/Info.plist";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.example.ExportPhotoAndCaption;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		A1B2C3D4E5F6000000000061 /* Build configuration list for PBXProject "Export Photo and Caption" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A1B2C3D4E5F6000000000070 /* Debug */,
+				A1B2C3D4E5F6000000000071 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A1B2C3D4E5F6000000000062 /* Build configuration list for PBXNativeTarget "Export Photo and Caption" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A1B2C3D4E5F6000000000072 /* Debug */,
+				A1B2C3D4E5F6000000000073 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = A1B2C3D4E5F6000000000060 /* Project object */;
+}
