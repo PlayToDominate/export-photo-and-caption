@@ -3,7 +3,7 @@ import Foundation
 struct FilenameBuilder {
     func buildFilename(for photo: ProcessedPhoto) -> String {
         let datePart = formattedDate(photo.creationDate)
-        let captionPart = slug(photo.caption)
+        let captionPart = slug(photo.captionForExportSlug)
 
         if !captionPart.isEmpty {
             return "\(datePart)-\(captionPart).jpg"

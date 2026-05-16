@@ -291,7 +291,7 @@ struct ContentView: View {
     }
 
     private var styleGeneratePage: some View {
-        let hasGeneratedImages = model.photos.contains { $0.renderedImage != nil }
+        let hasGeneratedImages = model.photos.contains { $0.renderedFileURL != nil || $0.renderedImage != nil }
 
         return VStack(alignment: .leading, spacing: 12) {
             Text("Choose caption font, preview style, then generate and save.")
@@ -335,6 +335,22 @@ struct ContentView: View {
             .buttonStyle(.borderedProminent)
             .frame(maxWidth: .infinity)
             .disabled(model.photos.isEmpty || model.isExporting)
+
+            if model.isExporting {
+                ProgressView(value: Double(model.exportProgressProcessed), total: Double(max(model.exportProgressTotal, 1))) {
+                    Text(model.exportPhaseMessage ?? "Working...")
+                } currentValueLabel: {
+                    Text("Processed \(model.exportProgressProcessed) of \(model.exportProgressTotal)")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+
+                HStack(spacing: 10) {
+                    ProgressView()
+                    Text("Working...")
+                        .foregroundStyle(.secondary)
+                }
+            }
 
             if let status = model.generationStatusMessage {
                 Label(status, systemImage: "checkmark.seal")

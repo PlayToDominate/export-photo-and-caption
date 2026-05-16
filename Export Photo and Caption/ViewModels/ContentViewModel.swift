@@ -19,6 +19,9 @@ final class ContentViewModel: ObservableObject {
     @Published var exportSummary = ExportSummary()
     @Published var loadProgressProcessed: Int = 0
     @Published var loadProgressTotal: Int = 0
+    @Published var exportProgressProcessed: Int = 0
+    @Published var exportProgressTotal: Int = 0
+    @Published var exportPhaseMessage: String?
 
     private let metadataService = PhotoMetadataService()
     private let renderer = CaptionedPhotoRenderer()
@@ -128,9 +131,77 @@ final class ContentViewModel: ObservableObject {
             generationStatusMessage = "No photos selected to generate."
             return
         }
+        isExporting = true
+        exportPhaseMessage = "Working..."
+        exportProgressProcessed = 0
+        exportProgressTotal = max(photos.count * 2, 1)
+        generationStatusMessage = nil
+        saveStatusMessage = nil
+        await Task.yield()
+        defer {
+            isExporting = false
+            exportPhaseMessage = nil
+            exportProgressProcessed = 0
+            exportProgressTotal = 0
+        }
 
-        generateStyledImages()
-        await saveToAlbum()
+        do {
+            let album = try await createOrFetchAlbum(named: selectedAlbumName)
+            let batchSize = 10
+            let exportDirectory = try prepareRenderedExportDirectory()
+            var updatedPhotos = photos
+            var savedCount = 0
+
+            for chunkStart in stride(from: 0, to: updatedPhotos.count, by: batchSize) {
+                let chunkEnd = min(chunkStart + batchSize, updatedPhotos.count)
+                var batchPayload: [(imageData: Data, filename: String?, creationDate: Date?)] = []
+
+                for index in chunkStart..<chunkEnd {
+                    autoreleasepool {
+                        exportPhaseMessage = "Working... (generating \(index + 1) of \(updatedPhotos.count))"
+
+                        let rendered = renderer.render(image: updatedPhotos[index].sourceImage, caption: updatedPhotos[index].effectiveCaption, captionFont: captionFont)
+                        updatedPhotos[index].renderedFilename = filenameBuilder.buildFilename(for: updatedPhotos[index])
+
+                        guard let data = rendered.jpegData(compressionQuality: 0.92) else {
+                            exportProgressProcessed += 1
+                            return
+                        }
+
+                        if let filename = updatedPhotos[index].renderedFilename {
+                            let fileURL = exportDirectory.appendingPathComponent(filename)
+                            do {
+                                try data.write(to: fileURL, options: .atomic)
+                                updatedPhotos[index].renderedFileURL = fileURL
+                            } catch {
+                                // Keep going even if file write fails for a single item.
+                            }
+                        }
+
+                        batchPayload.append((data, updatedPhotos[index].renderedFilename, updatedPhotos[index].creationDate))
+                        updatedPhotos[index].renderedImage = nil
+                        exportProgressProcessed += 1
+                    }
+                }
+
+                savedCount += try await saveRenderedBatch(batchPayload, to: album)
+
+                for index in chunkStart..<chunkEnd {
+                    exportPhaseMessage = "Working... (saving \(index + 1) of \(updatedPhotos.count))"
+                    exportProgressProcessed += 1
+                }
+
+                await Task.yield()
+            }
+
+            photos = updatedPhotos
+            generationStatusMessage = "Generated \(updatedPhotos.count) captioned photo\(updatedPhotos.count == 1 ? "" : "s")."
+            saveStatusMessage = "Photo\(savedCount == 1 ? "" : "s") saved to album \"\(selectedAlbumName)\"."
+            exportSummary.generatedCount = updatedPhotos.count
+            exportSummary.savedCount = savedCount
+        } catch {
+            presentError(error.localizedDescription)
+        }
     }
 
     func removePhoto(_ photo: ProcessedPhoto) {
@@ -154,6 +225,9 @@ final class ContentViewModel: ObservableObject {
         generationStatusMessage = nil
         saveStatusMessage = nil
         exportSummary = ExportSummary()
+        exportProgressProcessed = 0
+        exportProgressTotal = 0
+        exportPhaseMessage = nil
         alertMessage = nil
     }
 
@@ -182,10 +256,21 @@ final class ContentViewModel: ObservableObject {
 
             var urls: [URL] = []
             for (index, photo) in photos.enumerated() {
+                if let renderedFileURL = photo.renderedFileURL, FileManager.default.fileExists(atPath: renderedFileURL.path) {
+                    let filename = photo.renderedFilename ?? renderedFileURL.lastPathComponent
+                    let outputURL = dir.appendingPathComponent(filename)
+                    if FileManager.default.fileExists(atPath: outputURL.path) {
+                        try FileManager.default.removeItem(at: outputURL)
+                    }
+                    try FileManager.default.copyItem(at: renderedFileURL, to: outputURL)
+                    urls.append(outputURL)
+                    continue
+                }
+
                 let image = photo.renderedImage ?? photo.sourceImage
                 let filename = photo.renderedFilename ?? "export-\(index + 1).jpg"
                 let fileURL = dir.appendingPathComponent(filename)
-                guard let data = image.jpegData(compressionQuality: 0.95) else { continue }
+                guard let data = image.jpegData(compressionQuality: 0.92) else { continue }
                 try data.write(to: fileURL, options: .atomic)
                 urls.append(fileURL)
             }
@@ -275,5 +360,42 @@ final class ContentViewModel: ObservableObject {
             albumChange.addAssets(placeholders as NSFastEnumeration)
         }
         return savedCount
+    }
+
+    private func saveRenderedBatch(_ batch: [(imageData: Data, filename: String?, creationDate: Date?)], to album: PHAssetCollection) async throws -> Int {
+        guard !batch.isEmpty else { return 0 }
+
+        var savedCount = 0
+        try await PHPhotoLibrary.shared().performChanges {
+            guard let albumChange = PHAssetCollectionChangeRequest(for: album) else { return }
+
+            var placeholders: [PHObjectPlaceholder] = []
+            for item in batch {
+                let createRequest = PHAssetCreationRequest.forAsset()
+                let options = PHAssetResourceCreationOptions()
+                options.originalFilename = item.filename
+                createRequest.addResource(with: .photo, data: item.imageData, options: options)
+                if let creationDate = item.creationDate {
+                    createRequest.creationDate = creationDate
+                }
+                if let ph = createRequest.placeholderForCreatedAsset {
+                    placeholders.append(ph)
+                }
+            }
+
+            savedCount = placeholders.count
+            albumChange.addAssets(placeholders as NSFastEnumeration)
+        }
+
+        return savedCount
+    }
+
+    private func prepareRenderedExportDirectory() throws -> URL {
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent("captioned-export-rendered", isDirectory: true)
+        if FileManager.default.fileExists(atPath: directory.path) {
+            try FileManager.default.removeItem(at: directory)
+        }
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        return directory
     }
 }

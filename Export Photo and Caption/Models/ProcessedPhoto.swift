@@ -16,6 +16,7 @@ struct ProcessedPhoto: Identifiable {
     var sourceImage: UIImage
     var renderedImage: UIImage?
     var renderedFilename: String?
+    var renderedFileURL: URL?
 
     var effectiveCaption: String {
         let overrideTrimmed = captionOverride?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
