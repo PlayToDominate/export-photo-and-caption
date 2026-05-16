@@ -1,5 +1,5 @@
 import SwiftUI
-import PhotosUI
+@preconcurrency import PhotosUI
 import UniformTypeIdentifiers
 
 struct PhotoPickerSheet: UIViewControllerRepresentable {
@@ -9,6 +9,7 @@ struct PhotoPickerSheet: UIViewControllerRepresentable {
         var config = PHPickerConfiguration(photoLibrary: .shared())
         config.selectionLimit = 0
         config.filter = .images
+        config.preferredAssetRepresentationMode = .current
 
         let picker = PHPickerViewController(configuration: config)
         picker.delegate = context.coordinator
@@ -52,18 +53,18 @@ struct PhotoPickerSheet: UIViewControllerRepresentable {
         private func loadInput(from result: PHPickerResult) async -> SelectedPhotoInput? {
             await withCheckedContinuation { continuation in
                 let provider = result.itemProvider
-                let type = UTType.image.identifier
-
-                if provider.hasItemConformingToTypeIdentifier(type) {
-                    provider.loadDataRepresentation(forTypeIdentifier: type) { data, _ in
-                        guard let data else {
-                            continuation.resume(returning: nil)
-                            return
-                        }
-                        continuation.resume(returning: SelectedPhotoInput(localIdentifier: result.assetIdentifier, imageData: data))
-                    }
-                } else {
+                let candidateTypes = [UTType.image.identifier] + provider.registeredTypeIdentifiers
+                guard let type = candidateTypes.first(where: { provider.hasItemConformingToTypeIdentifier($0) }) else {
                     continuation.resume(returning: nil)
+                    return
+                }
+
+                provider.loadDataRepresentation(forTypeIdentifier: type) { data, _ in
+                    guard let data else {
+                        continuation.resume(returning: nil)
+                        return
+                    }
+                    continuation.resume(returning: SelectedPhotoInput(localIdentifier: result.assetIdentifier, imageData: data))
                 }
             }
         }

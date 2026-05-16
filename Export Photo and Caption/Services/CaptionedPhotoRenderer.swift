@@ -1,8 +1,8 @@
 import Foundation
 import UIKit
 
-struct PolaroidRenderer {
-    func render(image: UIImage, caption: String, maxWidth: CGFloat = 1800) -> UIImage {
+struct CaptionedPhotoRenderer {
+    func render(image: UIImage, caption: String, captionFont: CaptionFontOption, maxWidth: CGFloat = 1800) -> UIImage {
         let aspect = image.size.height / max(image.size.width, 1)
         let photoWidth = min(maxWidth, image.size.width)
         let photoHeight = photoWidth * aspect
@@ -30,12 +30,33 @@ struct PolaroidRenderer {
             paragraph.alignment = .center
 
             let attrs: [NSAttributedString.Key: Any] = [
-                .font: UIFont.systemFont(ofSize: max(24, photoWidth * 0.045), weight: .regular),
+                .font: captionUIFont(for: captionFont, size: max(24, photoWidth * 0.045)),
                 .foregroundColor: UIColor.black,
                 .paragraphStyle: paragraph
             ]
 
             caption.draw(with: captionRect, options: [.usesLineFragmentOrigin, .truncatesLastVisibleLine], attributes: attrs, context: nil)
+        }
+    }
+
+    private func captionUIFont(for option: CaptionFontOption, size: CGFloat) -> UIFont {
+        switch option {
+        case .system:
+            return UIFont.systemFont(ofSize: size, weight: .regular)
+        case .rounded:
+            let base = UIFont.systemFont(ofSize: size, weight: .regular)
+            if let descriptor = base.fontDescriptor.withDesign(.rounded) {
+                return UIFont(descriptor: descriptor, size: size)
+            }
+            return base
+        case .serif:
+            return UIFont(name: "TimesNewRomanPSMT", size: size) ?? UIFont.systemFont(ofSize: size, weight: .regular)
+        case .monospaced:
+            return UIFont.monospacedSystemFont(ofSize: size, weight: .regular)
+        case .marker:
+            return UIFont(name: "MarkerFelt-Wide", size: size) ?? UIFont.systemFont(ofSize: size, weight: .regular)
+        case .script:
+            return UIFont(name: "SnellRoundhand", size: size) ?? UIFont.italicSystemFont(ofSize: size)
         }
     }
 

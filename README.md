@@ -1,92 +1,108 @@
-# Export Photo and Caption
+# Captioned Photos
 
-Native iOS SwiftUI app that lets users select photos, detect available caption/description metadata, and generate new Polaroid-style exported images with caption text burned into the output image.
+Native iOS SwiftUI app that lets users select photos, detect available caption/description metadata, and generate captioned photo exports with the caption text rendered directly into the new image.
 
 Original photos are never modified.
 
 ## Status
 
-Current stage: **V1 scaffold with debug-first caption verification**.
+Current stage: **working V1 with guided 3-step flow**.
 
-The first milestone is intentionally focused on proving what caption metadata is actually readable from iOS Photos assets on-device.
+The app is focused on simple, local processing:
 
-## V1 Goals
+1. permissions
+2. photo selection
+3. caption style + generate/save
 
-- Native iOS SwiftUI app.
-- Request Photos library permission.
-- Select multiple photos from Photos library.
-- For each selected photo:
-  - Load best available image data.
-  - Read creation date (`PHAsset.creationDate`, metadata fallback).
-  - Attempt caption/description extraction from available metadata.
-  - Render a new Polaroid-like image with caption area.
-  - Generate safe export filename (`yyyy-MM-dd-caption-slug.jpg` style).
-- Save generated images into a user-named Photos album (default: `Captioned Export`).
-- Offer iOS share sheet export (Files, AirDrop, etc.).
-- Show per-photo debug/details screen for caption/metadata inspection.
+## Core Features
 
-## Current Features Implemented
+- Native iOS SwiftUI app (no backend, no third-party processing SDKs).
+- Multi-photo pick flow from Photos.
+- Metadata extraction per selected photo:
+  - creation date
+  - original filename fallback chain
+  - caption/description candidates from metadata
+- Captioned image renderer using `UIGraphicsImageRenderer`:
+  - white print-style frame
+  - larger bottom caption area
+  - caption text baked into the exported image
+- Caption font selector (including script option) with preview.
+- One-tap generate + save flow (`Generate Captioned Photos`).
+- Save to Photos album (default: `Captioned Export`).
+- Share exported files via iOS share sheet.
+- Export summary section (generated/saved/skipped counts).
+- Launch screen storyboard + custom app icon integrated.
 
-- `PhotosPicker` multi-select flow.
-- `PHPhotoLibrary` permission request (`.readWrite`).
-- Metadata extraction pipeline:
-  - filename discovery
-  - creation date discovery
-  - caption candidate extraction from IPTC/TIFF/EXIF + selected asset KVC candidates
-  - metadata key listing for diagnostics
-- Debug detail view for each selected photo.
-- Polaroid renderer (`UIGraphicsImageRenderer`) with:
-  - white border
-  - enlarged bottom caption strip
-  - proportional centered crop (aspect-fill)
-  - caption text drawn into image
-- Filename builder with robust fallback chain.
-- Save-to-album export via PhotoKit.
-- Share-sheet export of generated files to temporary directory.
+## Current App Flow
+
+The app uses a simple step UI with page dots and back/next controls:
+
+1. **Permission**
+- Request photo access when needed.
+
+2. **Select Photos**
+- Pick one or more photos.
+- Remove selected photos via swipe delete.
+- Open system settings with `Update Photo Access` if needed.
+
+3. **Style + Generate**
+- Choose caption font.
+- See text preview style.
+- Generate and save captioned photos in one action.
+- Optional share export.
+- Start over/reset session.
 
 ## Project Structure
 
-- `Export Photo and Caption.xcodeproj`: native Xcode project (open directly).
+- `Export Photo and Caption.xcodeproj`: native Xcode project.
 - `Export Photo and Caption/ExportPhotoAndCaptionApp.swift`: app entrypoint.
-- `Export Photo and Caption/ContentView.swift`: main UI and flows.
-- `Export Photo and Caption/Models/ProcessedPhoto.swift`: processed photo model.
-- `Export Photo and Caption/ViewModels/ContentViewModel.swift`: app state + orchestration.
-- `Export Photo and Caption/Services/PhotoMetadataService.swift`: photo load + metadata/caption discovery.
-- `Export Photo and Caption/Services/PolaroidRenderer.swift`: styled image renderer.
-- `Export Photo and Caption/Services/FilenameBuilder.swift`: safe filename generation.
-- `Export Photo and Caption/Views/PhotoDetailView.swift`: debug screen.
-- `Export Photo and Caption/Views/ShareSheet.swift`: UIKit share-sheet wrapper.
-- `Export Photo and Caption/Info.plist`: iOS permissions text.
+- `Export Photo and Caption/ContentView.swift`: 3-step wizard UI and navigation.
+- `Export Photo and Caption/Models/ProcessedPhoto.swift`: selected/processed photo model.
+- `Export Photo and Caption/Models/SelectedPhotoInput.swift`: picker input payload.
+- `Export Photo and Caption/Models/CaptionFontOption.swift`: font options and preview styles.
+- `Export Photo and Caption/Models/ExportSummary.swift`: generated/saved/skipped summary.
+- `Export Photo and Caption/Models/AlertMessage.swift`: typed alert model.
+- `Export Photo and Caption/ViewModels/ContentViewModel.swift`: orchestration/state management.
+- `Export Photo and Caption/Services/PhotoMetadataService.swift`: data loading + metadata extraction.
+- `Export Photo and Caption/Services/CaptionedPhotoRenderer.swift`: styled image renderer.
+- `Export Photo and Caption/Services/FilenameBuilder.swift`: safe output filename generation.
+- `Export Photo and Caption/Views/PhotoDetailView.swift`: metadata detail/debug screen.
+- `Export Photo and Caption/Views/PhotoPickerSheet.swift`: PHPicker bridge.
+- `Export Photo and Caption/Views/ShareSheet.swift`: UIKit share wrapper.
+- `Export Photo and Caption/LaunchScreen.storyboard`: splash screen.
+- `Export Photo and Caption/Info.plist`: app display name + permission strings.
 
 ## Run Locally (Xcode)
 
 1. Open `Export Photo and Caption.xcodeproj` in Xcode.
 2. Set your Apple Developer Team in **Signing & Capabilities**.
-3. Update bundle identifier if needed (default is `com.example.ExportPhotoAndCaption`).
-4. Select an iPhone device target.
-5. Build and Run.
+3. Update bundle identifier if needed.
+4. Build and run on iPhone.
 
 Notes:
 
-- Real device is recommended for reliable Photos metadata behavior.
-- The project already includes required photo permissions in `Info.plist`.
+- Real device is recommended for realistic Photos behavior.
+- The app now displays as **Captioned Photos** (`CFBundleDisplayName`).
 
-## Permissions
+## Permissions Notes
 
-The app requests:
+The app uses Photos permission primarily for:
 
-- Photo library read access (to select and inspect photos).
-- Photo library add access (to save newly generated exports).
+- richer `PHAsset` metadata access
+- creating/using save album in Photos
+- saving generated assets back to library
+
+Photo picking itself uses iOS picker flow and may still show broader user-selectable choices depending on iOS behavior.
 
 ## Caption Metadata Caveat
 
-iOS Photos user-entered captions are not guaranteed to be embedded into every file’s exportable metadata representation.
+iOS user-entered Photos captions are not always exposed as file metadata through public APIs for every asset.
 
-That is why milestone one emphasizes the debug screen: it shows exactly which candidate caption fields and metadata keys are discoverable for each selected asset on the current iOS/device combination.
+When caption metadata is unavailable, the app falls back gracefully and still generates captioned output with fallback text.
 
-## Export Naming Strategy
+## Output Naming Strategy
 
-Filename format target:
+Primary format:
 
 - `YYYY-MM-DD-caption-slug.jpg`
 
@@ -96,53 +112,24 @@ Fallback order:
 2. creation date + original filename stem
 3. `unknown-date-photo-{index}.jpg`
 
-## Screenshots
+## Known Limitations
 
-Coming soon. Planned captures:
+- Cannot reliably deep-link directly into a specific album or specific newly saved asset inside Apple Photos using public APIs.
+- Caption metadata availability varies by source photo and iOS behavior.
 
-- Main screen with multi-photo selection.
-- Per-photo debug metadata details.
-- Rendered Polaroid preview/export examples.
+## Changelog (Recent)
 
-## Changelog
+### 2026-05-15
 
-### 2026-05-13
-
-- Initial SwiftUI app scaffold committed.
-- Added Photos permission + multi-select flow.
-- Added debug-first caption/metadata inspection screen.
-- Added Polaroid rendering pipeline.
-- Added filename strategy + album save + share sheet export.
-- Added native `.xcodeproj` and shared scheme.
-
-## Known Issues
-
-- Caption availability depends on what iOS/Photos actually exposes per asset.
-- Some selected assets may provide limited metadata depending on source/edit history.
-- Current caption extraction includes KVC-based candidate checks for diagnostics; behavior may vary by iOS version.
-- UI/visual polish is intentionally minimal in this milestone.
-
-## Non-Goals (for now)
-
-- No backend service.
-- No third-party metadata/processing SDKs.
-- No in-place edits to source Photos assets.
-
-## Roadmap (Living)
-
-Planned next iterations:
-
-- Improve caption typography/theme options.
-- Add export quality/size controls.
-- Add progress UI for large batch exports.
-- Add stronger metadata diagnostics and optional raw dump view.
-- Add tests for filename/caption fallback behavior.
-
-## Contributing Notes
-
-- Keep architecture simple and local-first.
-- Prioritize reliability of caption detection and debug visibility over visual polish.
-- Preserve originals always; generated output must be new assets/files.
+- Renamed user-facing app branding to **Captioned Photos**.
+- Introduced 3-step wizard flow with back/next and page dots.
+- Added script font option + styled font selector preview.
+- Combined generate + save into single primary action.
+- Added export summary counters (generated/saved/skipped).
+- Added launch screen storyboard and integrated custom app icon set.
+- Added stronger `Start Over` reset behavior and load-token safety for async picker race conditions.
+- Switched to typed alert model for cleaner error handling.
+- Renamed renderer to `CaptionedPhotoRenderer`.
 
 ## License
 

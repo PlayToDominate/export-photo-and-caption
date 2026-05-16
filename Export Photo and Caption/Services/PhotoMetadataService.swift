@@ -47,7 +47,7 @@ final class PhotoMetadataService {
         let originalFilename = asset.flatMap(originalFilename(for:)) ?? metadata.originalFilename ?? "photo-\(index + 1).jpg"
         let creationDate = asset?.creationDate ?? metadata.creationDate
 
-        let captionCandidates = buildCaptionCandidates(asset: asset, metadata: metadata.raw)
+        let captionCandidates = buildCaptionCandidates(metadata: metadata.raw)
         let caption = pickBestCaption(captionCandidates)
 
         return ProcessedPhoto(
@@ -74,7 +74,7 @@ final class PhotoMetadataService {
         PHAssetResource.assetResources(for: asset).first?.originalFilename
     }
 
-    private func buildCaptionCandidates(asset: PHAsset?, metadata: [String: Any]) -> [String: String] {
+    private func buildCaptionCandidates(metadata: [String: Any]) -> [String: String] {
         var candidates: [String: String] = [:]
 
         if let iptc = metadata[kCGImagePropertyIPTCDictionary as String] as? [String: Any] {
@@ -88,15 +88,6 @@ final class PhotoMetadataService {
 
         if let exif = metadata[kCGImagePropertyExifDictionary as String] as? [String: Any] {
             captureString(in: exif, key: kCGImagePropertyExifUserComment as String, label: "EXIF User Comment")
-        }
-
-        if let asset {
-            if let value = asset.value(forKey: "localizedDescription") as? String, !value.isEmpty {
-                candidates["PHAsset localizedDescription (KVC)"] = value
-            }
-            if let value = asset.value(forKey: "description") as? String, !value.isEmpty {
-                candidates["PHAsset description (KVC)"] = value
-            }
         }
 
         func captureString(in dict: [String: Any], key: String, label: String) {
@@ -113,9 +104,7 @@ final class PhotoMetadataService {
             "IPTC Caption",
             "TIFF Image Description",
             "EXIF User Comment",
-            "IPTC Object Name",
-            "PHAsset localizedDescription (KVC)",
-            "PHAsset description (KVC)"
+            "IPTC Object Name"
         ]
 
         for key in orderedKeys {

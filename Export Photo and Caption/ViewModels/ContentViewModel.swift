@@ -4,50 +4,125 @@ import UIKit
 
 @MainActor
 final class ContentViewModel: ObservableObject {
-    @Published var authorizationStatus: PHAuthorizationStatus = .notDetermined
+    @Published var authorizationStatus: PHAuthorizationStatus = PHPhotoLibrary.authorizationStatus(for: .readWrite)
     @Published var selectedInputs: [SelectedPhotoInput] = []
     @Published var photos: [ProcessedPhoto] = []
     @Published var selectedAlbumName = "Captioned Export"
     @Published var isLoading = false
     @Published var isExporting = false
-    @Published var lastError: String?
+    @Published var alertMessage: AlertMessage?
     @Published var showShareSheet = false
     @Published var shareURLs: [URL] = []
+    @Published var generationStatusMessage: String?
+    @Published var saveStatusMessage: String?
+    @Published var captionFont: CaptionFontOption = .system
+    @Published var exportSummary = ExportSummary()
 
     private let metadataService = PhotoMetadataService()
-    private let renderer = PolaroidRenderer()
+    private let renderer = CaptionedPhotoRenderer()
     private let filenameBuilder = FilenameBuilder()
+    private var activeLoadToken = UUID()
 
     func requestPermission() async {
         authorizationStatus = await metadataService.requestPhotoAuthorization()
     }
 
     func loadPickerItems() async {
+        let loadToken = UUID()
+        activeLoadToken = loadToken
+
+        guard !selectedInputs.isEmpty else {
+            photos = []
+            generationStatusMessage = nil
+            saveStatusMessage = nil
+            return
+        }
+
         isLoading = true
         defer { isLoading = false }
 
         var loaded: [ProcessedPhoto] = []
+        var skippedFromExportAlbum = 0
         for (index, input) in selectedInputs.enumerated() {
+            if isInputFromExportAlbum(input) {
+                skippedFromExportAlbum += 1
+                continue
+            }
+
             do {
                 let photo = try await metadataService.loadPhoto(from: input, index: index)
                 loaded.append(photo)
             } catch {
-                lastError = error.localizedDescription
+                presentError(error.localizedDescription)
             }
         }
 
+        guard loadToken == activeLoadToken else { return }
+
         photos = loaded
+        generationStatusMessage = nil
+        saveStatusMessage = nil
+        exportSummary = ExportSummary(skippedCount: skippedFromExportAlbum)
+
+        if loaded.isEmpty {
+            presentError("No selected photos could be loaded. Try selecting a different photo format or expanding Photos access.")
+        }
+
+        if skippedFromExportAlbum > 0 {
+            presentError("Skipped \(skippedFromExportAlbum) photo\(skippedFromExportAlbum == 1 ? "" : "s") from the Captioned Export album to avoid re-processing exports.")
+        }
     }
 
     func generateStyledImages() {
+        guard !photos.isEmpty else {
+            generationStatusMessage = "No photos selected to generate."
+            return
+        }
+
         var updated: [ProcessedPhoto] = []
         for var photo in photos {
-            let rendered = renderer.render(image: photo.sourceImage, caption: photo.effectiveCaption)
+            let rendered = renderer.render(image: photo.sourceImage, caption: photo.effectiveCaption, captionFont: captionFont)
             photo.renderedImage = rendered
             photo.renderedFilename = filenameBuilder.buildFilename(for: photo)
             updated.append(photo)
         }
         photos = updated
+        generationStatusMessage = "Generated \(updated.count) captioned photo\(updated.count == 1 ? "" : "s")."
+        exportSummary.generatedCount = updated.count
+    }
+
+    func generateAndSaveToAlbum() async {
+        guard !photos.isEmpty else {
+            generationStatusMessage = "No photos selected to generate."
+            return
+        }
+
+        generateStyledImages()
+        await saveToAlbum()
+    }
+
+    func removePhoto(_ photo: ProcessedPhoto) {
+        photos.removeAll { $0.id == photo.id }
+        selectedInputs.removeAll { $0.localIdentifier == photo.assetLocalIdentifier }
+
+        if photos.isEmpty {
+            generationStatusMessage = nil
+            saveStatusMessage = nil
+        }
+    }
+
+    func clearSelectedPhotos() {
+        activeLoadToken = UUID()
+        photos = []
+        selectedInputs = []
+        shareURLs = []
+        showShareSheet = false
+        isLoading = false
+        isExporting = false
+        generationStatusMessage = nil
+        saveStatusMessage = nil
+        exportSummary = ExportSummary()
+        alertMessage = nil
     }
 
     func saveToAlbum() async {
@@ -57,9 +132,11 @@ final class ContentViewModel: ObservableObject {
 
         do {
             let album = try await createOrFetchAlbum(named: selectedAlbumName)
-            try await saveRenderedImages(to: album)
+            let savedCount = try await saveRenderedImages(to: album)
+            saveStatusMessage = "Photo\(savedCount == 1 ? "" : "s") saved to album \"\(selectedAlbumName)\"."
+            exportSummary.savedCount = savedCount
         } catch {
-            lastError = error.localizedDescription
+            presentError(error.localizedDescription)
         }
     }
 
@@ -84,8 +161,12 @@ final class ContentViewModel: ObservableObject {
             shareURLs = urls
             showShareSheet = !urls.isEmpty
         } catch {
-            lastError = error.localizedDescription
+            presentError(error.localizedDescription)
         }
+    }
+
+    private func presentError(_ message: String) {
+        alertMessage = AlertMessage(title: "Error", message: message)
     }
 
     private func createOrFetchAlbum(named name: String) async throws -> PHAssetCollection {
@@ -117,7 +198,26 @@ final class ContentViewModel: ObservableObject {
         return albums.firstObject
     }
 
-    private func saveRenderedImages(to album: PHAssetCollection) async throws {
+    private func isInputFromExportAlbum(_ input: SelectedPhotoInput) -> Bool {
+        guard let localIdentifier = input.localIdentifier else { return false }
+        guard let exportAlbum = fetchAlbum(named: selectedAlbumName) else { return false }
+
+        let target = PHAsset.fetchAssets(withLocalIdentifiers: [localIdentifier], options: nil)
+        guard let asset = target.firstObject else { return false }
+
+        let albumAssets = PHAsset.fetchAssets(in: exportAlbum, options: nil)
+        var found = false
+        albumAssets.enumerateObjects { item, _, stop in
+            if item.localIdentifier == asset.localIdentifier {
+                found = true
+                stop.pointee = true
+            }
+        }
+        return found
+    }
+
+    private func saveRenderedImages(to album: PHAssetCollection) async throws -> Int {
+        var savedCount = 0
         try await PHPhotoLibrary.shared().performChanges {
             guard let albumChange = PHAssetCollectionChangeRequest(for: album) else { return }
 
@@ -138,7 +238,10 @@ final class ContentViewModel: ObservableObject {
                 }
             }
 
+            savedCount = placeholders.count
+
             albumChange.addAssets(placeholders as NSFastEnumeration)
         }
+        return savedCount
     }
 }
