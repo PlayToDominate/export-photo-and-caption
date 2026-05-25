@@ -4,6 +4,8 @@ Native iOS SwiftUI app that lets users select photos, detect available caption/d
 
 Original photos are never modified.
 
+[Screenshot Gallery](#screenshot-gallery)
+
 ## Status
 
 Current stage: **working V1 with guided 3-step flow**.
@@ -116,6 +118,32 @@ Fallback order:
 
 - Cannot reliably deep-link directly into a specific album or specific newly saved asset inside Apple Photos using public APIs.
 - Caption metadata availability varies by source photo and iOS behavior.
+
+## Screenshot Gallery
+
+1. splash-page  
+![splash-page](docs/screenshots/splash-page.png)
+
+2. pick-photos  
+![pick-photos](docs/screenshots/pick-photos.png)
+
+3. post-pick-photos  
+![post-pick-photos](docs/screenshots/post-pick-photos.png)
+
+4. chose-a-font-and-generate  
+![chose-a-font-and-generate](docs/screenshots/choose-a-font-and-generate.png)
+
+5. font-change-preview  
+![font-change-preview](docs/screenshots/font-change-preview.png)
+
+6. post-caption-photos  
+![post-caption-photos](docs/screenshots/post-caption-photos.png)
+
+7. captioned-export-photos-album  
+![captioned-export-photos-album](docs/screenshots/captioned-export-photo-album.png)
+
+8. captioned-photo  
+![captioned-photo](docs/screenshots/captioned-photo.png)
 
 ## Changelog (Recent)
 
